@@ -1,0 +1,30 @@
+{
+  "name": "mathview",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "jstat": "1.9.6",
+    "plotly.js": "4.0.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-plotly.js": "4.1.0"
+  },
+  "devDependencies": {
+    "@types/plotly.js": "3.0.13",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.7",
+    "@types/react-plotly.js": "2.6.4",
+    "@vitejs/plugin-react-swc": "4.3.3",
+    "typescript": "7.0.2",
+    "vite": "8.2.2",
+    "vitest": "4.1.11"
+  }
+}

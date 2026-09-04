@@ -1,0 +1,305 @@
+{
+  "cases": [
+    {
+      "cdf": 0.5912529568183097,
+      "density": 0.29881518214967284,
+      "id": "normal",
+      "parameters": {
+        "mu": 0.4,
+        "sigma": 1.3
+      },
+      "q": 0.8,
+      "quantile": 1.4941076036447885,
+      "x": 0.7
+    },
+    {
+      "cdf": 0.5899645268931721,
+      "density": 0.46280348882167016,
+      "id": "lognormal",
+      "parameters": {
+        "mu": 0.2,
+        "sigma": 0.6
+      },
+      "q": 0.8,
+      "quantile": 2.0237915159045947,
+      "x": 1.4
+    },
+    {
+      "cdf": 0.4541063632555892,
+      "density": 0.2453609338086385,
+      "id": "gamma",
+      "parameters": {
+        "scale": 1.2,
+        "shape": 2.4
+      },
+      "q": 0.8,
+      "quantile": 4.219222771945635,
+      "x": 2.3
+    },
+    {
+      "cdf": 0.6232098122855959,
+      "density": 1.8851304456639115,
+      "id": "beta",
+      "parameters": {
+        "alpha": 2.3,
+        "beta": 4.2
+      },
+      "q": 0.8,
+      "quantile": 0.5079930834188633,
+      "x": 0.4
+    },
+    {
+      "cdf": 0.6737202053769605,
+      "density": 0.45679171247225525,
+      "id": "exponential",
+      "parameters": {
+        "rate": 1.4
+      },
+      "q": 0.8,
+      "quantile": 1.1495985088815004,
+      "x": 0.8
+    },
+    {
+      "cdf": 0.6243903582711849,
+      "density": 0.297757629139341,
+      "id": "student-t",
+      "parameters": {
+        "mu": 0.3,
+        "nu": 5.5,
+        "scale": 1.2
+      },
+      "q": 0.8,
+      "quantile": 1.394341430554864,
+      "x": 0.7
+    },
+    {
+      "cdf": 0.19768218549856711,
+      "density": 0.12325318280491972,
+      "id": "chi-square",
+      "parameters": {
+        "nu": 6.2
+      },
+      "q": 0.8,
+      "quantile": 8.808785261250058,
+      "x": 3.2
+    },
+    {
+      "cdf": 0.4850402372898107,
+      "density": 0.5281769402197716,
+      "id": "weibull",
+      "parameters": {
+        "scale": 1.4,
+        "shape": 1.7
+      },
+      "q": 0.8,
+      "quantile": 1.8522564282429304,
+      "x": 1.1
+    },
+    {
+      "cdf": 0.6671594914264514,
+      "density": 0.3759665418743548,
+      "id": "f",
+      "parameters": {
+        "df1": 5.5,
+        "df2": 11.0
+      },
+      "q": 0.8,
+      "quantile": 1.757122272963177,
+      "x": 1.3
+    },
+    {
+      "cdf": 0.7607656698583694,
+      "density": 0.33492806219828286,
+      "id": "pareto",
+      "parameters": {
+        "scale": 1.2,
+        "shape": 2.8
+      },
+      "q": 0.8,
+      "quantile": 2.1321285739899034,
+      "x": 2.0
+    },
+    {
+      "cdf": 0.3250369625210763,
+      "density": 0.7945347972737422,
+      "id": "power-function",
+      "parameters": {
+        "shape": 2.2,
+        "upper": 1.5
+      },
+      "q": 0.8,
+      "quantile": 1.3553181463786417,
+      "x": 0.9
+    },
+    {
+      "cdf": 0.37715392772963907,
+      "density": 0.17979923689717656,
+      "id": "poisson",
+      "parameters": {
+        "rate": 4.3
+      },
+      "q": 0.8,
+      "quantile": 6.0,
+      "x": 3
+    },
+    {
+      "cdf": 0.41589293755753554,
+      "density": 0.16588226561971364,
+      "id": "binomial",
+      "parameters": {
+        "n": 20,
+        "prob": 0.4
+      },
+      "q": 0.8,
+      "quantile": 10.0,
+      "x": 7
+    },
+    {
+      "cdf": 0.3785790545507814,
+      "density": 0.11819833716796875,
+      "id": "negative-binomial",
+      "parameters": {
+        "prob": 0.45,
+        "r": 5
+      },
+      "q": 0.8,
+      "quantile": 9.0,
+      "x": 4
+    },
+    {
+      "cdf": 0.5559523803277224,
+      "density": 0.26512430396927233,
+      "id": "hypergeometric",
+      "parameters": {
+        "draws": 12,
+        "population": 50,
+        "successes": 18
+      },
+      "q": 0.8,
+      "quantile": 6.0,
+      "x": 4
+    },
+    {
+      "cdf": 0.4666666666666666,
+      "density": 0.3333333333333333,
+      "id": "uniform",
+      "parameters": {
+        "lower": -1.0,
+        "upper": 2.0
+      },
+      "q": 0.8,
+      "quantile": 1.4000000000000004,
+      "x": 0.4
+    },
+    {
+      "cdf": 0.6,
+      "density": 0.5999999999999998,
+      "id": "bernoulli",
+      "parameters": {
+        "prob": 0.4
+      },
+      "q": 0.8,
+      "quantile": 1.0,
+      "x": 0
+    },
+    {
+      "cdf": 0.725375,
+      "density": 0.147875,
+      "id": "geometric",
+      "parameters": {
+        "prob": 0.35
+      },
+      "q": 0.8,
+      "quantile": 3.0,
+      "x": 2
+    },
+    {
+      "cdf": 0.6357997487800918,
+      "density": 0.2398225169877875,
+      "id": "cauchy",
+      "parameters": {
+        "location": 0.2,
+        "scale": 1.1
+      },
+      "q": 0.8,
+      "quantile": 1.7140201125182912,
+      "x": 0.7
+    },
+    {
+      "cdf": 0.6826317905298591,
+      "density": 0.2885165540637645,
+      "id": "laplace",
+      "parameters": {
+        "location": 0.2,
+        "scale": 1.1
+      },
+      "q": 0.8,
+      "quantile": 1.207919805061571,
+      "x": 0.7
+    },
+    {
+      "cdf": 0.6117194114071615,
+      "density": 0.21592615737712495,
+      "id": "logistic",
+      "parameters": {
+        "location": 0.2,
+        "scale": 1.1
+      },
+      "q": 0.8,
+      "quantile": 1.72492379723188,
+      "x": 0.7
+    },
+    {
+      "cdf": 0.727396362886219,
+      "density": 0.592705060517363,
+      "id": "inverse-gamma",
+      "parameters": {
+        "scale": 2.0,
+        "shape": 3.5
+      },
+      "q": 0.8,
+      "quantile": 1.0464843350511266,
+      "x": 0.9
+    },
+    {
+      "cdf": 0.30624999999999997,
+      "density": 1.7499999999999998,
+      "id": "triangular",
+      "parameters": {
+        "lower": 0.0,
+        "mode": 0.4,
+        "upper": 1.0
+      },
+      "q": 0.8,
+      "quantile": 0.6535898384862247,
+      "x": 0.35
+    },
+    {
+      "cdf": 0.525073558457937,
+      "density": 0.2878819301298913,
+      "id": "gev",
+      "parameters": {
+        "location": 0.2,
+        "scale": 1.1,
+        "shape": 0.15
+      },
+      "q": 0.8,
+      "quantile": 2.0502839142403446,
+      "x": 0.7
+    },
+    {
+      "cdf": 0.49711865317178355,
+      "density": 0.3528991907566431,
+      "id": "gpd",
+      "parameters": {
+        "location": 0.1,
+        "scale": 1.2,
+        "shape": 0.25
+      },
+      "q": 0.8,
+      "quantile": 2.477674149861859,
+      "x": 1.0
+    }
+  ],
+  "scipy_version": "1.18.1"
+}
