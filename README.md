@@ -44,6 +44,16 @@ The Power function distribution is a bounded distribution on `[0, b]`; it is dis
 
 ## Local development
 
+### Source map
+
+- `src/App.tsx`: view state, controls, Plotly charts, browser persistence, exports, and the optional `show_probability_distribution` WebMCP tool.
+- `src/lib/distributions.ts`: distribution definitions, parameter validation, sampling, and tail properties.
+- `src/lib/risk.ts`: interval probabilities, VaR, ES, and survival-tail calculations.
+- `src/lib/distributions.test.ts` and `tests/fixtures/scipy_reference.json`: numerical checks and the SciPy reference data.
+- `scripts/generate_scipy_reference.py`: reference-data generation using the project Python environment.
+
+### Run locally
+
 Requirements: Node.js and npm.
 
 ```bash
@@ -69,6 +79,12 @@ The distribution tests compare PDF/PMF, CDF, and quantile values with a checked-
 ## Deployment
 
 The repository includes `vercel.json` for a Vite production build. Vercel builds with `npm run build` and publishes the `dist` directory.
+
+## Human-AI collaboration
+
+Project rules are maintained in [AGENTS.md](AGENTS.md), adapted from human-ai-governance v0.7.7. They retain valid task authorization, preserve the active objective across side questions, and require evidence for completed or cancelled operations. See the [adoption record](docs/human-ai-governance-v0.7.7.md) for the local source version and validation.
+
+The rules use the existing project commands above. Changes to the global skill require a separately requested project update; committing or pushing project work does not by itself authorize deployment or domain changes.
 
 ## Future direction
 
