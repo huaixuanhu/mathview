@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   automaticDomain,
   defaultParameters,
@@ -14,7 +14,7 @@ import {
 } from "./lib/distributions";
 import { calculateRisk, intervalProbability, tailSeries, type TailDirection } from "./lib/risk";
 
-const Plot = lazy(() => import("react-plotly.js"));
+const Plot = lazy(() => import("./components/InteractivePlot"));
 
 type AppMode = "one" | "two" | "risk";
 type FunctionMode = "density" | "cdf";
@@ -31,14 +31,7 @@ interface PinnedCurve extends DistributionState {
 }
 
 const FAMILIES: DistributionFamily[] = ["Foundations", "Counts", "Waiting time", "Shape & scale", "Heavy tails", "Extreme values"];
-const COLORS = ["#55e6d2", "#77a7ff", "#ffb76b", "#d38cff", "#f46f82"];
-const PLOT_CONFIG = {
-  responsive: true,
-  displaylogo: false,
-  scrollZoom: true,
-  modeBarButtonsToRemove: ["sendDataToCloud", "lasso2d", "select2d"],
-  toImageButtonOptions: { format: "png", filename: "mathview-chart", scale: 2 },
-} as const;
+const COLORS = ["#9badc1", "#b3a18e", "#92a99b", "#aba0b9", "#c08f8a"];
 
 function readStoredDistribution(key: string, fallbackId: string): DistributionState {
   const fallbackDefinition = distributionById(fallbackId);
@@ -57,14 +50,33 @@ function readStoredDistribution(key: string, fallbackId: string): DistributionSt
 
 function useStoredDistribution(key: string, fallbackId: string) {
   const [state, setState] = useState<DistributionState>(() => readStoredDistribution(key, fallbackId));
+  const latest = useRef(state);
   useEffect(() => {
-    window.localStorage.setItem(key, JSON.stringify(state));
+    latest.current = state;
+    const timeout = window.setTimeout(() => {
+      try { window.localStorage.setItem(key, JSON.stringify(state)); } catch { /* The workspace still works without browser storage. */ }
+    }, 200);
+    return () => window.clearTimeout(timeout);
   }, [key, state]);
+  useEffect(() => {
+    const flush = () => {
+      try { window.localStorage.setItem(key, JSON.stringify(latest.current)); } catch { /* Storage may be unavailable. */ }
+    };
+    window.addEventListener("pagehide", flush);
+    return () => { window.removeEventListener("pagehide", flush); flush(); };
+  }, [key]);
   return [state, setState] as const;
 }
 
+function readStoredMode(): AppMode {
+  try {
+    const value = window.localStorage.getItem("mathview-mode");
+    return value === "two" || value === "risk" ? value : "one";
+  } catch { return "one"; }
+}
+
 function App() {
-  const [mode, setMode] = useState<AppMode>(() => (window.localStorage.getItem("mathview-mode") as AppMode | null) ?? "one");
+  const [mode, setMode] = useState<AppMode>(readStoredMode);
   const [one, setOne] = useStoredDistribution("mathview-one", "normal");
   const [jointX, setJointX] = useStoredDistribution("mathview-joint-x", "normal");
   const [jointY, setJointY] = useStoredDistribution("mathview-joint-y", "normal");
@@ -79,6 +91,7 @@ function App() {
   const [manualDomain, setManualDomain] = useState<[number, number]>([-4, 4]);
   const [interval, setInterval] = useState<[number, number]>([-1, 1]);
   const [pinned, setPinned] = useState<PinnedCurve[]>([]);
+  const [controlsOpen, setControlsOpen] = useState(false);
 
   const oneDefinition = distributionById(one.id);
   const xDefinition = distributionById(jointX.id);
@@ -92,7 +105,7 @@ function App() {
   const riskErrors = validateParameters(riskDefinition, risk.parameters);
 
   useEffect(() => {
-    window.localStorage.setItem("mathview-mode", mode);
+    try { window.localStorage.setItem("mathview-mode", mode); } catch { /* Browser storage is optional. */ }
   }, [mode]);
 
   useEffect(() => {
@@ -156,16 +169,18 @@ function App() {
   );
   const intervalResult = oneErrors.length ? Number.NaN : intervalProbability(oneDefinition, one.parameters, interval[0], interval[1]);
 
+  const pinnedTraces = useMemo(() => pinned.flatMap((curve, index) => {
+    const definition = distributionById(curve.id);
+    if (validateParameters(definition, curve.parameters).length) return [];
+    const sample = sampleDistribution(definition, curve.parameters);
+    return [makeOneDimensionalTrace(definition, curve.parameters, sample, functionMode, COLORS[index + 1] ?? COLORS[1], 1.8, true)];
+  }), [pinned, functionMode]);
+
   const onePlotData = useMemo(() => {
     const traces: any[] = [];
-    pinned.forEach((curve, index) => {
-      const definition = distributionById(curve.id);
-      if (validateParameters(definition, curve.parameters).length) return;
-      const sample = sampleDistribution(definition, curve.parameters);
-      traces.push(makeOneDimensionalTrace(definition, curve.parameters, sample, functionMode, COLORS[index + 1] ?? COLORS[1], 1.8, true));
-    });
+    traces.push(...pinnedTraces);
 
-    const current = makeOneDimensionalTrace(oneDefinition, one.parameters, oneSeries, functionMode, COLORS[0], 3, false);
+    const current = makeOneDimensionalTrace(oneDefinition, one.parameters, oneSeries, functionMode, COLORS[0], 2.4, false);
     if (functionMode === "density" && oneDefinition.kind === "continuous") {
       const selectedX = oneSeries.x.filter((x) => x >= interval[0] && x <= interval[1]);
       if (selectedX.length) {
@@ -175,9 +190,9 @@ function App() {
           y: selectedY,
           type: "scatter",
           mode: "lines",
-          line: { color: "rgba(255,183,107,0.75)", width: 1 },
+          line: { color: "rgba(179,161,142,0.7)", width: 0 },
           fill: "tozeroy",
-          fillcolor: "rgba(255,183,107,0.22)",
+          fillcolor: "rgba(179,161,142,0.22)",
           hoverinfo: "skip",
           showlegend: false,
         });
@@ -185,10 +200,10 @@ function App() {
     }
     traces.push(current);
     return traces;
-  }, [functionMode, interval, one.parameters, oneDefinition, oneSeries, pinned]);
+  }, [functionMode, interval, one.parameters, oneDefinition, oneSeries, pinnedTraces]);
 
   const jointGrid = useMemo(() => {
-    if (jointErrors.length || xDefinition.kind !== yDefinition.kind) return null;
+    if (mode !== "two" || jointErrors.length || xDefinition.kind !== yDefinition.kind) return null;
     const xSample = decimateSample(sampleDistribution(xDefinition, jointX.parameters, undefined, 68), 86);
     const ySample = decimateSample(sampleDistribution(yDefinition, jointY.parameters, undefined, 68), 86);
     const xValues = jointFunction === "density" ? xSample.density : xSample.cdf;
@@ -198,7 +213,7 @@ function App() {
       y: ySample.x,
       z: yValues.map((yValue) => xValues.map((xValue) => xValue * yValue)),
     };
-  }, [jointErrors.length, jointFunction, jointX.parameters, jointY.parameters, xDefinition, yDefinition]);
+  }, [mode, jointErrors.length, jointFunction, jointX.parameters, jointY.parameters, xDefinition, yDefinition]);
 
   const jointPlotData = useMemo(() => {
     if (!jointGrid) return [];
@@ -207,11 +222,11 @@ function App() {
       y: jointGrid.y,
       z: jointGrid.z,
       colorscale: [
-        [0, "#07111d"],
-        [0.25, "#12344a"],
-        [0.55, "#187e89"],
-        [0.8, "#55e6d2"],
-        [1, "#fff2bf"],
+        [0, "#1b1d21"],
+        [0.25, "#3c4957"],
+        [0.55, "#788b9a"],
+        [0.8, "#b6c0bd"],
+        [1, "#ded5c7"],
       ],
       colorbar: { title: jointFunction === "cdf" ? "Joint CDF" : xDefinition.kind === "discrete" ? "Joint PMF" : "Joint PDF", thickness: 13 },
       hovertemplate: "x = %{x:.4g}<br>y = %{y:.4g}<br>z = %{z:.6g}<extra></extra>",
@@ -222,8 +237,8 @@ function App() {
   }, [jointFunction, jointGrid, jointView, xDefinition.kind]);
 
   const riskResult = useMemo(
-    () => (riskErrors.length ? null : calculateRisk(riskDefinition, risk.parameters, confidence, tailDirection)),
-    [confidence, risk.parameters, riskDefinition, riskErrors.length, tailDirection],
+    () => (mode !== "risk" || riskErrors.length ? null : calculateRisk(riskDefinition, risk.parameters, confidence, tailDirection)),
+    [mode, confidence, risk.parameters, riskDefinition, riskErrors.length, tailDirection],
   );
   const riskDomain = useMemo(() => {
     if (!riskResult) return [-4, 4] as [number, number];
@@ -236,17 +251,33 @@ function App() {
     return [lower, upper] as [number, number];
   }, [confidence, risk.parameters, riskDefinition, riskResult]);
   const riskSample = useMemo(
-    () => (riskErrors.length ? { x: [], density: [], cdf: [] } : sampleDistribution(riskDefinition, risk.parameters, riskDomain)),
-    [riskDefinition, risk.parameters, riskDomain, riskErrors.length],
+    () => (mode !== "risk" || riskView !== "risk" || riskErrors.length ? { x: [], density: [], cdf: [] } : sampleDistribution(riskDefinition, risk.parameters, riskDomain)),
+    [mode, riskView, riskDefinition, risk.parameters, riskDomain, riskErrors.length],
   );
   const regularTailSeries = useMemo(
-    () => (riskErrors.length ? { x: [], y: [], reference: undefined } : tailSeries(riskDefinition, risk.parameters)),
-    [riskDefinition, risk.parameters, riskErrors.length],
+    () => (mode !== "risk" || riskView !== "tail" || riskErrors.length ? { x: [], y: [], reference: undefined } : tailSeries(riskDefinition, risk.parameters)),
+    [mode, riskView, riskDefinition, risk.parameters, riskErrors.length],
   );
   const riskPlot = useMemo(
     () => makeRiskPlot(riskDefinition, risk.parameters, riskSample, riskResult, tailDirection),
     [risk.parameters, riskDefinition, riskResult, riskSample, tailDirection],
   );
+
+  const oneLayout = useMemo(() => {
+    const base = cartesianLayout({
+      xTitle: "x",
+      yTitle: functionMode === "cdf" ? "F(x)" : oneDefinition.kind === "continuous" ? "Density" : "Mass",
+      step: oneDefinition.kind === "discrete",
+      uirevision: `${one.id}-${functionMode}-${rangeMode}-${rangeMode === "manual" ? manualDomain.join(":") : ""}`,
+    });
+    return rangeMode === "manual" && manualDomain[1] > manualDomain[0]
+      ? { ...base, xaxis: { ...base.xaxis, range: [...manualDomain], autorange: false } }
+      : base;
+  }, [functionMode, one.id, oneDefinition.kind, rangeMode, manualDomain]);
+  const jointChartLayout = useMemo(() => jointLayout(jointView, xDefinition, yDefinition, jointFunction), [jointView, xDefinition, yDefinition, jointFunction]);
+  const riskChartLayout = useMemo(() => riskLayout(riskDefinition, riskResult, tailDirection, riskPlot.maxY), [riskDefinition, riskResult, tailDirection, riskPlot.maxY]);
+  const tailChartLayout = useMemo(() => tailLayout(riskDefinition), [riskDefinition]);
+  const tailData = useMemo(() => tailPlotData(riskDefinition, risk.parameters, regularTailSeries), [riskDefinition, risk.parameters, regularTailSeries]);
 
   const chooseOneDistribution = (id: string) => {
     const definition = distributionById(id);
@@ -321,11 +352,14 @@ function App() {
           <ModeButton active={mode === "two"} label="2D" sublabel="Joint" onClick={() => setMode("two")} />
           <ModeButton active={mode === "risk"} label="Tail" sublabel="VaR & ES" onClick={() => setMode("risk")} />
         </nav>
-        <div className="status-pill"><span /> Browser compute</div>
+        <div className="workspace-caption">An interactive study of probability</div>
       </header>
 
-      <section className="workspace">
-        <aside className="control-panel" aria-label="Visualization controls">
+      <section className="workspace" data-controls-open={controlsOpen}>
+        <button className="mobile-controls-toggle" type="button" aria-expanded={controlsOpen} aria-controls="visualization-controls" onClick={() => setControlsOpen((open) => !open)}>
+          <span>Parameters <small>参数与区间</small></span><span>{controlsOpen ? "收起 −" : "展开 ＋"}</span>
+        </button>
+        <aside id="visualization-controls" className="control-panel" aria-label="Visualization controls">
           {mode === "one" && (
             <>
               <PanelIdentity definition={oneDefinition} />
@@ -352,14 +386,15 @@ function App() {
                   <LabeledNumber label="x max" value={manualDomain[1]} onChange={(value) => setManualDomain([manualDomain[0], value])} />
                 </div>
               )}
-              <div className="control-title top-gap">Interval probability <small>区间概率</small></div>
+              <PanelRule />
+              <div className="control-title">Interval probability <small>区间概率</small></div>
               <div className="paired-inputs">
                 <LabeledNumber label="From" value={interval[0]} onChange={(value) => setInterval([value, interval[1]])} />
                 <LabeledNumber label="To" value={interval[1]} onChange={(value) => setInterval([interval[0], value])} />
               </div>
-              <div className="probability-readout">P(a ≤ X ≤ b)<strong>{formatProbability(intervalResult)}</strong></div>
+              <div className="probability-readout"><span>P(a ≤ X ≤ b)<small>Selected area · 选中区间</small></span><strong>{formatProbability(intervalResult)}</strong></div>
               <div className="button-row">
-                <button className="secondary-button" type="button" onClick={addPinnedCurve} disabled={pinned.length >= 4 || !!oneErrors.length}>Pin curve</button>
+                <button className="secondary-button" type="button" onClick={addPinnedCurve} disabled={pinned.length >= 4 || !!oneErrors.length}>＋ Pin curve{pinned.length ? ` (${pinned.length}/4)` : ""}</button>
                 <button className="ghost-button" type="button" onClick={() => setPinned([])} disabled={!pinned.length}>Clear {pinned.length || ""}</button>
               </div>
               <StatsGrid definition={oneDefinition} values={one.parameters} />
@@ -374,7 +409,7 @@ function App() {
               </div>
               <div className="joint-block">
                 <div className="joint-axis-label"><span>X</span> First marginal</div>
-                <DistributionPicker value={jointX.id} onChange={chooseJointX} hideLabel />
+                <DistributionPicker value={jointX.id} onChange={chooseJointX} label="X distribution" hideLabel />
                 <ParameterControls
                   definition={xDefinition}
                   values={jointX.parameters}
@@ -385,7 +420,7 @@ function App() {
               <PanelRule />
               <div className="joint-block">
                 <div className="joint-axis-label"><span>Y</span> Second marginal</div>
-                <DistributionPicker value={jointY.id} onChange={chooseJointY} kind={xDefinition.kind} hideLabel />
+                <DistributionPicker value={jointY.id} onChange={chooseJointY} kind={xDefinition.kind} label="Y distribution" hideLabel />
                 <ParameterControls
                   definition={yDefinition}
                   values={jointY.parameters}
@@ -473,15 +508,7 @@ function App() {
                 <Suspense fallback={<PlotFallback />}>
                   <Plot
                     data={onePlotData as any}
-                    layout={cartesianLayout({
-                      xTitle: "x",
-                      yTitle: functionMode === "cdf" ? "F(x)" : oneDefinition.kind === "continuous" ? "Density" : "Mass",
-                      step: oneDefinition.kind === "discrete",
-                      uirevision: `${one.id}-${rangeMode}`,
-                    }) as any}
-                    config={PLOT_CONFIG as any}
-                    useResizeHandler
-                    style={{ width: "100%", height: "100%" }}
+                    layout={oneLayout as any}
                   />
                 </Suspense>
               </PlotFrame>
@@ -489,7 +516,7 @@ function App() {
                 <div><span>Formula</span><code>{oneDefinition.formula}</code></div>
                 <p>{oneDefinition.description}</p>
               </div>
-              <ChartFooter left="Drag to zoom · Double-click to reset · Camera icon exports PNG" right={parameterSummary(oneDefinition, one.parameters)} />
+              <ChartFooter left="拖动平移 · 滚轮缩放 · 双击图面复位 · 双击坐标轴单独复位" right={parameterSummary(oneDefinition, one.parameters)} />
             </>
           )}
 
@@ -517,10 +544,7 @@ function App() {
                 <Suspense fallback={<PlotFallback />}>
                   <Plot
                     data={jointPlotData as any}
-                    layout={jointLayout(jointView, xDefinition, yDefinition, jointFunction) as any}
-                    config={PLOT_CONFIG as any}
-                    useResizeHandler
-                    style={{ width: "100%", height: "100%" }}
+                    layout={jointChartLayout as any}
                   />
                 </Suspense>
               </PlotFrame>
@@ -528,7 +552,7 @@ function App() {
                 <div><span>Joint rule</span><code>{jointFunction === "cdf" ? "Fₓ,ᵧ(x,y) = Fₓ(x) · Fᵧ(y)" : "fₓ,ᵧ(x,y) = fₓ(x) · fᵧ(y)"}</code></div>
                 <p>Both marginals are user-defined and independent. Surface height or colour represents the joint value.</p>
               </div>
-              <ChartFooter left={jointView === "surface" ? "Drag to rotate · Scroll to zoom · Double-click to reset" : "Drag to zoom · Hover for joint values"} right={`${xDefinition.kind} pair`} />
+              <ChartFooter left={jointView === "surface" ? "拖动旋转 · 滚轮缩放 · Reset view 恢复视角" : "拖动平移 · 滚轮缩放 · 双击图面或坐标轴复位"} right={`${xDefinition.kind} pair`} />
             </>
           )}
 
@@ -550,18 +574,12 @@ function App() {
                   {riskView === "risk" ? (
                     <Plot
                       data={riskPlot.data as any}
-                      layout={riskLayout(riskDefinition, riskResult, tailDirection, riskPlot.maxY) as any}
-                      config={PLOT_CONFIG as any}
-                      useResizeHandler
-                      style={{ width: "100%", height: "100%" }}
+                      layout={riskChartLayout as any}
                     />
                   ) : (
                     <Plot
-                      data={tailPlotData(riskDefinition, risk.parameters, regularTailSeries) as any}
-                      layout={tailLayout(riskDefinition) as any}
-                      config={PLOT_CONFIG as any}
-                      useResizeHandler
-                      style={{ width: "100%", height: "100%" }}
+                      data={tailData as any}
+                      layout={tailChartLayout as any}
                     />
                   )}
                 </Suspense>
@@ -600,18 +618,20 @@ function DistributionPicker({
   value,
   onChange,
   kind,
+  label,
   hideLabel = false,
 }: {
   value: string;
   onChange: (value: string) => void;
   kind?: "continuous" | "discrete";
+  label?: string;
   hideLabel?: boolean;
 }) {
   const candidates = kind ? distributions.filter((item) => item.kind === kind) : distributions;
   return (
     <label className={hideLabel ? "picker-wrap compact-picker" : "picker-wrap"}>
       {!hideLabel && <span className="field-label">Distribution <small>分布</small></span>}
-      <select className="select-control" value={value} onChange={(event) => onChange(event.target.value)}>
+      <select className="select-control" aria-label={label} value={value} onChange={(event) => onChange(event.target.value)}>
         {FAMILIES.map((family) => {
           const items = candidates.filter((item) => item.family === family);
           return items.length ? (
@@ -636,6 +656,7 @@ function ParameterControls({
   onChange: (key: string, value: number) => void;
   compact?: boolean;
 }) {
+  const groupId = useId();
   return (
     <div className={compact ? "parameter-list is-compact" : "parameter-list"}>
       {!compact && <div className="control-title">Parameters <small>参数</small></div>}
@@ -646,9 +667,9 @@ function ParameterControls({
         return (
           <div className="parameter-block" key={parameter.key}>
             <div className="parameter-row">
-              <label htmlFor={`${definition.id}-${parameter.key}`}>{parameter.label} <span>{parameter.symbol}</span></label>
+              <label htmlFor={`${groupId}-${parameter.key}`}>{parameter.label} <span>{parameter.symbol}</span></label>
               <input
-                id={`${definition.id}-${parameter.key}`}
+                id={`${groupId}-${parameter.key}`}
                 className="number-input"
                 type="number"
                 min={parameter.min}
@@ -728,7 +749,7 @@ function ChartToolbar({ eyebrow, title, controls }: { eyebrow: string; title: st
 }
 
 function PlotFrame({ children, error }: { children: React.ReactNode; error?: string }) {
-  return <div className="plot-wrap">{error ? <div className="plot-error"><strong>Check parameters</strong><span>{error}</span></div> : children}</div>;
+  return <div className="plot-wrap">{error ? <div className="plot-error" role="alert"><strong>Check parameters</strong><span>{error}</span></div> : children}</div>;
 }
 
 function PlotFallback() { return <div className="plot-fallback"><span /><p>Loading interactive chart…</p></div>; }
@@ -765,7 +786,7 @@ function makeOneDimensionalTrace(
     name,
     line: { color, width, shape: definition.kind === "discrete" ? "hv" : "linear" },
     fill: pinned || mode === "cdf" ? "none" : "tozeroy",
-    fillcolor: "rgba(85, 230, 210, 0.10)",
+    fillcolor: "rgba(155, 173, 193, 0.055)",
     hovertemplate: `x = %{x:.5g}<br>${mode === "cdf" ? "CDF" : "PDF"} = %{y:.6g}<extra>${name}</extra>`,
   };
 }
@@ -797,7 +818,7 @@ function makeRiskPlot(
         x: sample.x,
         y: sample.density,
         type: "bar",
-        marker: { color: sample.x.map((x) => inTail(x) ? "#ff8b72" : "#55e6d2"), opacity: 0.86 },
+        marker: { color: sample.x.map((x) => inTail(x) ? "#c08f8a" : COLORS[0]), opacity: 0.86 },
         hovertemplate: "k = %{x}<br>PMF = %{y:.6g}<extra></extra>",
       }],
       maxY,
@@ -812,9 +833,9 @@ function makeRiskPlot(
         y: sample.density,
         type: "scatter",
         mode: "lines",
-        line: { color: "#55e6d2", width: 2.6 },
+        line: { color: COLORS[0], width: 2.4 },
         fill: "tozeroy",
-        fillcolor: "rgba(85,230,210,.07)",
+        fillcolor: "rgba(155,173,193,.055)",
         hovertemplate: "x = %{x:.5g}<br>PDF = %{y:.6g}<extra></extra>",
       },
       {
@@ -822,9 +843,9 @@ function makeRiskPlot(
         y: selectedY,
         type: "scatter",
         mode: "lines",
-        line: { color: "#ff8b72", width: 2 },
+        line: { color: "#c08f8a", width: 2 },
         fill: "tozeroy",
-        fillcolor: "rgba(255,107,107,.28)",
+        fillcolor: "rgba(192,143,138,.2)",
         hovertemplate: "Tail x = %{x:.5g}<br>PDF = %{y:.6g}<extra></extra>",
       },
     ],
@@ -835,12 +856,15 @@ function makeRiskPlot(
 function cartesianLayout({ xTitle, yTitle, step, uirevision }: { xTitle: string; yTitle: string; step?: boolean; uirevision: string }) {
   return {
     autosize: true,
-    paper_bgcolor: "rgba(0,0,0,0)",
-    plot_bgcolor: "rgba(0,0,0,0)",
-    margin: { l: 62, r: 26, t: 22, b: 55 },
+    paper_bgcolor: "#1b1d21",
+    plot_bgcolor: "#1b1d21",
+    margin: { l: 62, r: 24, t: 62, b: 54 },
     showlegend: true,
-    legend: { orientation: "h", x: 0, y: 1.08, font: { size: 11, color: "#8094aa" }, bgcolor: "rgba(0,0,0,0)" },
-    hovermode: "x unified",
+    legend: { orientation: "h", x: 0, y: 1.05, font: { size: 11, color: "#9a9fa8" }, bgcolor: "rgba(0,0,0,0)" },
+    hovermode: "closest",
+    hoverlabel: { bgcolor: "#292c32", bordercolor: "#50565f", font: { color: "#e4e3df", size: 12 } },
+    dragmode: "pan",
+    transition: { duration: 0 },
     bargap: step ? 0.2 : undefined,
     uirevision,
     font: plotFont(),
@@ -853,11 +877,11 @@ function jointLayout(view: JointView, x: DistributionDefinition, y: Distribution
   const zTitle = functionMode === "cdf" ? "Joint CDF" : x.kind === "continuous" ? "Joint PDF" : "Joint PMF";
   const common = {
     autosize: true,
-    paper_bgcolor: "rgba(0,0,0,0)",
-    plot_bgcolor: "rgba(0,0,0,0)",
-    margin: view === "surface" ? { l: 16, r: 20, t: 18, b: 18 } : { l: 66, r: 78, t: 24, b: 60 },
+    paper_bgcolor: "#1b1d21",
+    plot_bgcolor: "#1b1d21",
+    margin: view === "surface" ? { l: 16, r: 20, t: 48, b: 18 } : { l: 62, r: 76, t: 52, b: 54 },
     font: plotFont(),
-    uirevision: `${x.id}-${y.id}-${view}`,
+    uirevision: `${x.id}-${y.id}-${view}-${functionMode}`,
   };
   if (view === "surface") {
     return {
@@ -871,7 +895,7 @@ function jointLayout(view: JointView, x: DistributionDefinition, y: Distribution
       },
     };
   }
-  return { ...common, xaxis: axisStyle(`X · ${x.name}`), yaxis: axisStyle(`Y · ${y.name}`) };
+  return { ...common, dragmode: "pan", transition: { duration: 0 }, xaxis: axisStyle(`X · ${x.name}`), yaxis: axisStyle(`Y · ${y.name}`) };
 }
 
 function riskLayout(
@@ -883,11 +907,11 @@ function riskLayout(
   const base = cartesianLayout({ xTitle: "x", yTitle: definition.kind === "continuous" ? "Density" : "Mass", step: definition.kind === "discrete", uirevision: `${definition.id}-${direction}` });
   if (!result) return base;
   const markerY = maxY * 0.92;
-  const shapes: any[] = [{ type: "line", x0: result.valueAtRisk, x1: result.valueAtRisk, y0: 0, y1: 1, yref: "paper", line: { color: "#ffb76b", width: 2, dash: "dash" } }];
-  const annotations: any[] = [{ x: result.valueAtRisk, y: markerY, text: "VaR", showarrow: true, arrowcolor: "#ffb76b", font: { color: "#ffcf96" }, bgcolor: "#152133", borderpad: 5 }];
+  const shapes: any[] = [{ type: "line", x0: result.valueAtRisk, x1: result.valueAtRisk, y0: 0, y1: 1, yref: "paper", line: { color: "#b3a18e", width: 1.5, dash: "dash" } }];
+  const annotations: any[] = [{ x: result.valueAtRisk, y: markerY, text: "VaR", showarrow: true, arrowcolor: "#b3a18e", font: { color: "#d0c0ad" }, bgcolor: "#24262b", borderpad: 5 }];
   if (Number.isFinite(result.expectedShortfall)) {
-    shapes.push({ type: "line", x0: result.expectedShortfall, x1: result.expectedShortfall, y0: 0, y1: 1, yref: "paper", line: { color: "#ff6f78", width: 2, dash: "dot" } });
-    annotations.push({ x: result.expectedShortfall, y: markerY * 0.72, text: result.approximate ? "ES ≈" : "ES", showarrow: true, arrowcolor: "#ff6f78", font: { color: "#ff9ca3" }, bgcolor: "#152133", borderpad: 5 });
+    shapes.push({ type: "line", x0: result.expectedShortfall, x1: result.expectedShortfall, y0: 0, y1: 1, yref: "paper", line: { color: "#c08f8a", width: 1.5, dash: "dot" } });
+    annotations.push({ x: result.expectedShortfall, y: markerY * 0.72, text: result.approximate ? "ES ≈" : "ES", showarrow: true, arrowcolor: "#c08f8a", font: { color: "#d0a4a0" }, bgcolor: "#24262b", borderpad: 5 });
   }
   return { ...base, shapes, annotations, showlegend: false };
 }
@@ -903,8 +927,8 @@ function tailPlotData(
     type: "scatter",
     mode: definition.kind === "discrete" ? "lines+markers" : "lines",
     name: "Survival S(x)",
-    line: { color: "#55e6d2", width: 3 },
-    marker: { color: "#55e6d2", size: 5 },
+    line: { color: COLORS[0], width: 2.4 },
+    marker: { color: COLORS[0], size: 5 },
     hovertemplate: "x = %{x:.6g}<br>S(x) = %{y:.4e}<extra></extra>",
   }];
   if (series.reference) {
@@ -914,7 +938,7 @@ function tailPlotData(
       type: "scatter",
       mode: "lines",
       name: `Reference slope ${formatCompact(definition.tail(parameters).exponent ?? Number.NaN)}`,
-      line: { color: "#ffb76b", width: 2, dash: "dash" },
+      line: { color: "#b3a18e", width: 1.8, dash: "dash" },
       hoverinfo: "skip",
     });
   }
@@ -932,26 +956,27 @@ function tailLayout(definition: DistributionDefinition) {
 
 function axisStyle(title: string) {
   return {
-    title: { text: title, font: { color: "#74889e", size: 12 } },
-    gridcolor: "rgba(143,167,194,.11)",
-    zerolinecolor: "rgba(143,167,194,.22)",
-    tickfont: { color: "#71859b", size: 11 },
+    title: { text: title, font: { color: "#a0a4ad", size: 11 } },
+    gridcolor: "rgba(180,185,196,.08)",
+    zerolinecolor: "rgba(180,185,196,.18)",
+    tickfont: { color: "#959ba6", size: 11 },
+    showspikes: false, // The independent overlay tracks the pointer across the entire plot.
     automargin: true,
   };
 }
 
 function sceneAxis(title: string) {
   return {
-    title: { text: title, font: { color: "#8197ac", size: 11 } },
-    color: "#7890a7",
-    gridcolor: "rgba(143,167,194,.15)",
-    zerolinecolor: "rgba(143,167,194,.25)",
-    backgroundcolor: "rgba(6,17,29,.32)",
+    title: { text: title, font: { color: "#a0a4ad", size: 11 } },
+    color: "#959ba6",
+    gridcolor: "rgba(180,185,196,.12)",
+    zerolinecolor: "rgba(180,185,196,.22)",
+    backgroundcolor: "rgba(27,29,33,.32)",
     showbackground: true,
   };
 }
 
-function plotFont() { return { color: "#9bb0c4", family: "Inter, ui-sans-serif, system-ui" }; }
+function plotFont() { return { color: "#acb0b8", family: "-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" }; }
 
 function parameterSummary(definition: DistributionDefinition, values: ParameterValues) {
   return definition.parameters.map((parameter) => `${parameter.symbol}=${formatCompact(values[parameter.key])}`).join(" · ");

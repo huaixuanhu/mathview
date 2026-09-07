@@ -12,6 +12,20 @@ MathView is a small, browser-based probability laboratory for statistics, data s
 - CSV data export and Plotly PNG chart export
 - Responsive layout and local persistence of the current workspace
 
+## Chart controls
+
+- Move the pointer anywhere inside a flat chart to see a crosshair at the pointer position. It remains visible away from the curve; hovering a curve still shows its data values.
+- Hold the left mouse button and drag to pan; use the wheel or trackpad scroll to zoom.
+- Double-click the plot to restore both axes to their default scales for the current data.
+- Double-click the horizontal or vertical axis to restore only that axis. In Manual range mode, horizontal reset restores the entered bounds.
+- Parameter changes preserve a view that you have panned or zoomed. Switching distribution or PDF/PMF/CDF starts a fresh view.
+- **Reset view** is a keyboard-accessible alternative; in 3D it restores the camera. **PNG** exports the chart and **CSV** exports the 1D samples.
+- On narrow screens, expand **Parameters** to edit the controls; collapse it to return to the chart.
+
+The interface uses a graphite palette with muted blue, stone and rose accents. Plot updates are coalesced at animation frames, with only the latest pending input retained while a draw is running. A completed draw catches up with that input without waiting an extra frame. Pinned samples and layouts are reused. Parameter persistence is debounced by 200 ms and flushed when leaving the page; existing storage keys and saved values remain compatible.
+
+The crosshair uses a separate pointer-transparent overlay beneath the value tooltips. It updates CSS transforms at animation frames without redrawing the plot or waiting for Plotly's hover timer. Plot geometry is measured after layout changes, resize, scroll or pointer entry, not on every pointer movement. The 3D surface retains its camera interaction.
+
 The two-dimensional mode currently uses
 
 ```text
@@ -46,7 +60,10 @@ The Power function distribution is a bounded distribution on `[0, b]`; it is dis
 
 ### Source map
 
-- `src/App.tsx`: view state, controls, Plotly charts, browser persistence, exports, and the optional `show_probability_distribution` WebMCP tool.
+- `src/App.tsx`: view state, controls, chart data, browser persistence, CSV export, and the optional `show_probability_distribution` WebMCP tool.
+- `src/components/InteractivePlot.tsx`: Plotly rendering, pointer interaction, independent axis reset, resize handling, and PNG export.
+- `src/lib/plotCrosshair.ts`: pointer-following crosshair, plot-boundary handling, and drag cursor lifecycle.
+- `src/lib/renderQueue.ts` and `src/lib/renderQueue.test.ts`: latest-input scheduling, recovery, and cleanup checks.
 - `src/lib/distributions.ts`: distribution definitions, parameter validation, sampling, and tail properties.
 - `src/lib/risk.ts`: interval probabilities, VaR, ES, and survival-tail calculations.
 - `src/lib/distributions.test.ts` and `tests/fixtures/scipy_reference.json`: numerical checks and the SciPy reference data.
