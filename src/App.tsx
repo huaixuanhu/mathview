@@ -15,8 +15,9 @@ import {
 import { calculateRisk, intervalProbability, tailSeries, type TailDirection } from "./lib/risk";
 
 const Plot = lazy(() => import("./components/InteractivePlot"));
+const ManifoldPage = lazy(() => import("./components/ManifoldPage"));
 
-type AppMode = "one" | "two" | "risk";
+type AppMode = "one" | "two" | "risk" | "manifold";
 type FunctionMode = "density" | "cdf";
 type JointView = "heatmap" | "contour" | "surface";
 type RiskView = "risk" | "tail";
@@ -71,12 +72,13 @@ function useStoredDistribution(key: string, fallbackId: string) {
 function readStoredMode(): AppMode {
   try {
     const value = window.localStorage.getItem("mathview-mode");
-    return value === "two" || value === "risk" ? value : "one";
+    return value === "two" || value === "risk" || value === "manifold" ? value : "one";
   } catch { return "one"; }
 }
 
 function App() {
   const [mode, setMode] = useState<AppMode>(readStoredMode);
+  const [distributionMode, setDistributionMode] = useState<"one" | "two">(() => readStoredMode() === "two" ? "two" : "one");
   const [one, setOne] = useStoredDistribution("mathview-one", "normal");
   const [jointX, setJointX] = useStoredDistribution("mathview-joint-x", "normal");
   const [jointY, setJointY] = useStoredDistribution("mathview-joint-y", "normal");
@@ -148,6 +150,7 @@ function App() {
           if (errors.length) throw new Error(errors.join(" "));
           setOne({ id: definition.id, parameters: proposed });
           setMode("one");
+          setDistributionMode("one");
           setFunctionMode(candidate.function === "cdf" ? "cdf" : "density");
           return { distributionId: definition.id, parameters: proposed, function: candidate.function === "cdf" ? "cdf" : "density" };
         },
@@ -344,22 +347,23 @@ function App() {
           <div className="brand-mark" aria-hidden="true">∿</div>
           <div>
             <div className="brand-name">MathView</div>
-            <div className="brand-kicker">Probability &amp; Tail Lab</div>
+            <div className="brand-kicker">Probability &amp; Geometry Lab</div>
           </div>
         </div>
         <nav className="mode-tabs" aria-label="Visualization mode">
-          <ModeButton active={mode === "one"} label="1D" sublabel="Distribution" onClick={() => setMode("one")} />
-          <ModeButton active={mode === "two"} label="2D" sublabel="Joint" onClick={() => setMode("two")} />
+          <ModeButton active={mode === "one" || mode === "two"} label="概率分布" sublabel="Distribution" onClick={() => setMode(distributionMode)} />
           <ModeButton active={mode === "risk"} label="Tail" sublabel="VaR & ES" onClick={() => setMode("risk")} />
+          <ModeButton active={mode === "manifold"} label="流形" sublabel="Manifold" onClick={() => setMode("manifold")} />
         </nav>
-        <div className="workspace-caption">An interactive study of probability</div>
+        <div className="workspace-caption">An interactive study of mathematics</div>
       </header>
 
-      <section className="workspace" data-controls-open={controlsOpen}>
+      {mode === "manifold" ? <Suspense fallback={<div className="page-loading" role="status">正在载入流形工作区…</div>}><ManifoldPage /></Suspense> : <section className="workspace" data-controls-open={controlsOpen}>
         <button className="mobile-controls-toggle" type="button" aria-expanded={controlsOpen} aria-controls="visualization-controls" onClick={() => setControlsOpen((open) => !open)}>
           <span>Parameters <small>参数与区间</small></span><span>{controlsOpen ? "收起 −" : "展开 ＋"}</span>
         </button>
         <aside id="visualization-controls" className="control-panel" aria-label="Visualization controls">
+          {(mode === "one" || mode === "two") && <div className="distribution-dimensions"><Segmented value={mode} options={[{ value: "one", label: "1D Distribution" }, { value: "two", label: "2D Joint" }]} onChange={(value) => { setMode(value as "one" | "two"); setDistributionMode(value as "one" | "two"); }} /></div>}
           {mode === "one" && (
             <>
               <PanelIdentity definition={oneDefinition} />
@@ -592,7 +596,7 @@ function App() {
             </>
           )}
         </section>
-      </section>
+      </section>}
     </main>
   );
 }

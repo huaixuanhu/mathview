@@ -27,6 +27,10 @@ button:disabled { cursor: not-allowed; opacity: 0.4; }
 button:active:not(:disabled) { filter: brightness(1.18); }
 button, a, input, select { touch-action: manipulation; }
 .app-shell { min-height: 100vh; }
+.page-loading { padding: 48px 32px; color: var(--muted); font-size: 13px; }
+.distribution-dimensions { margin-bottom: 24px; }
+.distribution-dimensions .segmented-control { display: flex; }
+.distribution-dimensions .segmented-control button { flex: 1; min-height: 34px; }
 
 .topbar {
   position: sticky;

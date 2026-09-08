@@ -1,6 +1,6 @@
 # MathView
 
-MathView is a small, browser-based probability laboratory for statistics, data science, and financial mathematics. It runs entirely in the browser, works on desktop and mobile, and does not require MATLAB or a backend service.
+MathView is a small, browser-based probability and geometry laboratory for statistics, finance, and physics. It runs entirely in the browser, works on desktop and mobile, and does not require MATLAB or a backend service.
 
 ## Version 0.1 scope
 
@@ -11,6 +11,37 @@ MathView is a small, browser-based probability laboratory for statistics, data s
 - Log-log survival plots and regular-variation reference slopes where applicable
 - CSV data export and Plotly PNG chart export
 - Responsive layout and local persistence of the current workspace
+- A third top-level Manifold page with statistics, finance, and physics examples, tangent planes, tangent vectors, and cotangent-coordinate diagrams
+
+The top-level pages are **Probability distribution**, **Tail**, and **Manifold**. The existing **1D Distribution / 2D Joint** switch is inside the probability page's parameter panel (expand Parameters on mobile).
+
+## Manifold explorer
+
+Each example is a two-dimensional smooth coordinate patch rendered in three dimensions. Change the base point and tangent-vector components with sliders or numeric inputs, or drag the arrow in the tangent-coordinate diagram. Rotate and zoom the 3D surface, toggle the tangent plane and comparison path, reset the camera, or export the 3D chart as PNG. The dual diagram and numeric readouts remain available independently of the 3D renderer.
+
+| Field | Example | Surface representation | Covector shown |
+| --- | --- | --- | --- |
+| Statistics | Normal family | `(μ, σ, μ² + σ²)`, `σ > 0` | `d E[X²]` |
+| Statistics | Three-category probability simplex | `2(√p₁, √p₂, √p₃)` | Entropy differential `dH`, natural logarithms |
+| Finance | European call price | `(m, σ, C/K)`, `m = S/K` | `dC = K·Delta dm + Vega dσ` |
+| Finance | Three-asset portfolio variance | `(w₁, w₂, wᵀΣw)` | `d(wᵀΣw)` in the two free chart coordinates |
+| Physics | Particle constrained to a sphere | Unit sphere, away from polar-coordinate singularities | Gravitational potential differential `dU` |
+| Physics | Double-pendulum configuration | A torus of two periodic absolute angles, plus an actual-pendulum sketch | Potential differential `dU` |
+
+For an embedding `Φ(q¹,q²)`, the tangent vector is `v¹∂₁Φ + v²∂₂Φ`. The finite plane patch drawn at `p = Φ(q)` is a translated view of the tangent space. The 3D arrow is scaled for visibility; its displayed multiplier is stated below the plot. The two smaller diagrams show coefficients in the coordinate and dual bases. Their axes do not assert that the embedded coordinate basis is orthonormal.
+
+The cotangent space is the dual vector space, drawn separately. Its arrow represents the coefficients of `α = df`, not a surface normal or a metric-independent gradient vector. Pairing is `α(v) = α₁v¹ + α₂v²`. The page compares `ε α(v)` with `f(q + εv) − f(q)` and reports the signed difference. The requested step is shortened at the displayed patch boundary; the selected tangent vector is unchanged. Periodic angles can cross their seam. A zero vector or zero covector has an explicit zero marker.
+
+Model conventions:
+
+- The normal moment surface is a visual embedding of the family, not its Fisher–Rao geometry. The categorical square-root embedding of radius 2 does preserve the Fisher metric. Its chart uses `p = (u, (1−u)v, (1−u)(1−v))` and stays inside `pᵢ > 0`.
+- The option example uses `K = 100`, `T = 1 year`, `r = 3%`, and no dividends. Volatility is a decimal; Vega is per unit volatility, so a one-percentage-point change is `0.01`. Height is `C/K`, while price and differential readouts use `C`.
+- Portfolio inputs are synthetic: annual volatilities `12%, 20%, 28%` and correlations `0.20, 0.10, 0.25` for pairs `12, 13, 23`. Covariance is `[[144,48,33.6],[48,400,140],[33.6,140,784]]` in percentage-point-squared units. Nonnegative weights follow the same interior chart as the categorical example.
+- The sphere uses `m = 1 kg`, `R = 1 m`, `g = 9.81 m/s²`, and `U = mgz`. The double pendulum has two unit point masses and two massless unit rods, with both angles measured from the downward vertical. Its potential above the lowest configuration is `19.62(1−cos θ₁) + 9.81(1−cos θ₂)` J. The torus is a configuration representation, not a physical trajectory or a kinetic-energy metric. Physics vectors use rad/s; the step uses seconds; `dU(v)` is power in W. Comparison paths hold the selected coordinate velocities fixed and do not solve the equations of motion.
+
+Manifold settings are saved separately under `mathview-manifold-v1`, validated when read, and flushed on page exit. Existing probability and tail storage keys and parameter values are retained; `mathview-mode` also accepts `manifold`. **Reset current example** restores that example's parameters without clearing other saved examples. Browser storage is optional.
+
+References: [Normal family (NIST)](https://www.itl.nist.gov/div898/handbook/eda/section3/eda3661.htm), [Fisher geometry (Davis et al., section 3.1)](https://arxiv.org/html/2405.14664v4#S3.SS1), [Black–Scholes and Greeks (Columbia)](https://www.columbia.edu/~mh2078/FoundationsFE/BlackScholes.pdf), [portfolio variance (William Sharpe)](https://web.stanford.edu/~wfsharpe/mia/rr/mia_rr4.htm), [mechanics and configuration spaces (Trinity College)](https://www.maths.tcd.ie/~hamiltlu/mechanics/ch1.pdf), [double pendulum (UC Berkeley)](https://rotations.berkeley.edu/the-double-pendulum/), and [smooth manifolds (John M. Lee)](https://sites.math.washington.edu/~lee/Books/ISM/).
 
 ## Chart controls
 
@@ -66,6 +97,10 @@ The Power function distribution is a bounded distribution on `[0, b]`; it is dis
 - `src/lib/renderQueue.ts` and `src/lib/renderQueue.test.ts`: latest-input scheduling, recovery, and cleanup checks.
 - `src/lib/distributions.ts`: distribution definitions, parameter validation, sampling, and tail properties.
 - `src/lib/risk.ts`: interval probabilities, VaR, ES, and survival-tail calculations.
+- `src/components/ManifoldPage.tsx` and `src/components/manifold.css`: field/example selection, interactive tangent and cotangent-coordinate diagrams, local persistence, and responsive manifold workspace.
+- `src/lib/manifolds.ts`: six embeddings, analytic tangent bases and differentials, model conventions, and local comparisons.
+- `src/lib/manifoldPlots.ts`: cached surface grids, tangent-plane patches, 3D vectors, comparison paths, and camera layouts.
+- `src/lib/manifolds.test.ts`: independent derivative checks, geometric constraints, SciPy call-price/Greek references, energy conventions, and boundary behavior.
 - `src/lib/distributions.test.ts` and `tests/fixtures/scipy_reference.json`: numerical checks and the SciPy reference data.
 - `scripts/generate_scipy_reference.py`: reference-data generation using the project Python environment.
 
@@ -105,4 +140,4 @@ The rules use the existing project commands above. Changes to the global skill r
 
 ## Future direction
 
-Future versions can add general multivariate function surfaces, including option-pricing, volatility, return, log-posterior-density, log-likelihood, and derivative visualizations. These can be implemented with browser numerical code plus Plotly/WebGL and do not inherently require MATLAB.
+Future versions can extend the manifold examples with additional metrics, model parameters, geodesics, and physical dynamics, and add general multivariate surfaces such as volatility, return, log-posterior-density, and log-likelihood. These can be implemented with browser numerical code plus Plotly/WebGL and do not inherently require MATLAB.

@@ -1,0 +1,144 @@
+.manifold-categories { display: flex; margin-top: 25px; border-bottom: 1px solid var(--line); }
+.manifold-categories button { flex: 1; min-height: 51px; padding: 4px 0 10px; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); font-size: 13px; cursor: pointer; }
+.manifold-categories button small { display: block; margin-top: 4px; color: var(--muted-deep); font-size: 10px; }
+.manifold-categories button.is-active { border-bottom-color: var(--accent); color: var(--text); }
+.manifold-categories button:hover { color: var(--text); background: var(--surface); }
+.manifold-description { margin: 13px 0 0; color: var(--muted); font-size: 12px; line-height: 1.85; }
+.manifold-slider .parameter-row label { max-width: 175px; line-height: 1.6; }
+.manifold-slider .number-input { flex: 0 0 67px; }
+.vector-slider .range-input::-webkit-slider-thumb { background: #a9c4b0; }
+.vector-slider .range-input::-moz-range-thumb { background: #a9c4b0; }
+.manifold-layer-controls { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+.manifold-layer-controls label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; cursor: pointer; }
+.manifold-layer-controls input { width: 15px; height: 15px; margin: 0; accent-color: var(--accent); }
+.manifold-reset { width: 100%; min-height: 36px; margin-top: 22px; }
+.manifold-weights { margin-top: 16px; }
+.manifold-weights > div { display: flex; height: 5px; gap: 2px; overflow: hidden; border-radius: 2px; }
+.manifold-weights p { display: flex; justify-content: space-between; gap: 5px; margin: 9px 0 0; color: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
+.pendulum-sketch { margin: 8px 0 0; text-align: center; }
+.pendulum-sketch svg { display: block; width: 100%; height: 133px; }
+.pendulum-sketch figcaption { margin-top: 2px; color: var(--muted-deep); font-size: 10px; }
+
+.manifold-main { min-width: 0; padding: 28px 30px 24px; }
+.manifold-toolbar { min-height: 79px; gap: 20px; }
+.manifold-toolbar h1 > span { margin-left: 10px; color: var(--muted); font: 16px -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; letter-spacing: 0; }
+.manifold-dimension { color: #c5c5c1; font-size: 12px; text-align: right; }
+.manifold-dimension > span { display: block; margin-top: 8px; color: var(--muted-deep); font-size: 11px; }
+.manifold-stage { display: grid; grid-template-columns: minmax(0, 1fr) 300px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.manifold-scene { display: flex; min-width: 0; flex-direction: column; padding-top: 19px; padding-right: 20px; }
+.space-heading { display: flex; align-items: center; gap: 13px; min-height: 41px; }
+.space-symbol { color: var(--accent); font: italic 23px Georgia, "Times New Roman", serif; white-space: nowrap; }
+.space-heading h2 { margin: 0; color: var(--text); font-size: 12px; font-weight: 500; }
+.space-heading h2 > span { color: var(--muted); font-size: 11px; margin-left: 5px; }
+.space-heading p { margin: 5px 0 0; color: var(--muted-deep); font-size: 10px; line-height: 1.5; }
+.manifold-plot { border: 0; min-height: 340px; height: 385px; flex: 1; overflow: hidden; }
+.manifold-plot .plot-actions { top: 5px; right: 0; }
+.manifold-legend { display: flex; flex-wrap: wrap; gap: 9px 16px; margin-top: 7px; color: var(--muted); font-size: 10px; }
+.manifold-legend > span { display: flex; align-items: center; gap: 6px; }
+.manifold-legend i { width: 7px; height: 7px; border-radius: 50%; }
+.manifold-axis-key { margin: 10px 0 0; color: #b8bfc8; font-size: 10px; line-height: 1.7; }
+.manifold-scale-note { margin: 10px 0 15px; color: var(--muted-deep); font-size: 10px; line-height: 1.65; }
+.manifold-spaces { min-width: 0; border-left: 1px solid var(--line); }
+.space-panel { padding: 18px 0 15px 19px; min-width: 0; }
+.space-panel + .space-panel { border-top: 1px solid var(--line); }
+.tangent-space .space-symbol { color: #a9c4b0; }
+.cotangent-space .space-symbol { color: #cfaaa4; }
+.space-diagram { display: block; width: 100%; height: 154px; user-select: none; }
+.space-diagram.is-editable { touch-action: none; cursor: crosshair; }
+.space-diagram.is-editable:active { cursor: grabbing; }
+.space-grid { stroke: #30363d; stroke-width: 1; }
+.space-axis { stroke: #636b75; stroke-width: 1; }
+.space-axis-labels { fill: #a4a7ae; font: 10px -apple-system, BlinkMacSystemFont, sans-serif; }
+.space-vector-label { font: italic 17px Georgia, serif; }
+.space-drag-hint { fill: #969fa7; font-size: 9px; }
+.space-components { display: block; color: #c5cbd0; font: 11px ui-monospace, SFMono-Regular, Menlo, monospace; line-height: 1.65; overflow-wrap: anywhere; }
+.dual-note { margin: 8px 0 0; color: var(--muted-deep); font-size: 10px; line-height: 1.7; }
+.manifold-pairing { display: grid; grid-template-columns: minmax(170px, .85fr) minmax(200px, 1fr) minmax(230px, 1.15fr); gap: 24px; padding: 22px 0 20px; border-bottom: 1px solid var(--line); }
+.pairing-primary > span { display: block; color: var(--text); font-size: 12px; }
+.pairing-primary small { color: var(--muted); font-size: 10px; }
+.pairing-primary > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: 9px; margin: 10px 0; }
+.pairing-primary strong { color: #a9c4b0; font-size: 31px; font-weight: 400; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; }
+.pairing-primary > div > span { color: var(--muted); font-size: 10px; }
+.pairing-primary code { color: var(--muted); font-size: 11px; }
+.pairing-context strong { font-size: 12px; font-weight: 500; }
+.pairing-context p { margin: 10px 0; color: var(--muted); font-size: 11px; line-height: 1.85; }
+.pairing-context > span { color: #c0c3c8; font-size: 11px; font-variant-numeric: tabular-nums; }
+.pairing-comparison { border-left: 1px solid var(--line); padding-left: 22px; }
+.pairing-comparison > div { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 10px; font-size: 11px; }
+.pairing-comparison > div span { color: var(--muted); }
+.pairing-comparison strong { font-weight: 450; font-variant-numeric: tabular-nums; }
+.pairing-comparison > div:first-child strong { color: #c2b09b; }
+.pairing-comparison > div:nth-child(2) strong { color: #cfaaa4; }
+.pairing-comparison p { margin: 9px 0 0; color: var(--muted-deep); font-size: 10px; line-height: 1.65; }
+.manifold-boundary { margin: 16px 0 0; padding-left: 12px; border-left: 2px solid var(--warning); color: var(--warning); font-size: 11px; line-height: 1.8; }
+.manifold-learning-note { margin: 16px 0 14px; color: var(--muted); font-size: 11px; line-height: 1.85; }
+.manifold-details { color: var(--muted); font-size: 11px; line-height: 1.85; }
+.manifold-details summary { width: fit-content; min-height: 33px; color: #bbc2cb; cursor: pointer; }
+.manifold-details summary:hover { color: var(--text); }
+.manifold-details summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.manifold-details p { margin: 12px 0; max-width: 1000px; }
+.manifold-formulas { display: flex; flex-direction: column; gap: 9px; padding: 10px 0; }
+.manifold-formulas code { overflow-wrap: anywhere; color: #c5cbd0; }
+.manifold-details a { display: inline-block; margin-right: 22px; padding: 4px 0; color: var(--accent); text-underline-offset: 4px; }
+
+@media (min-width: 1600px) {
+  .manifold-stage { grid-template-columns: minmax(0, 1fr) 330px; }
+  .manifold-plot { min-height: 460px; }
+  .space-diagram { height: 184px; }
+}
+@media (max-width: 1250px) {
+  .manifold-main { padding-inline: 22px; }
+  .manifold-stage { grid-template-columns: minmax(0, 1fr) 255px; }
+  .space-panel { padding-left: 14px; }
+  .space-heading { gap: 9px; }
+  .space-heading h2 > span { display: block; margin: 3px 0 0; }
+  .space-diagram { height: 144px; }
+  .manifold-pairing { grid-template-columns: minmax(150px, .8fr) minmax(200px, 1.2fr); gap: 20px; }
+  .pairing-context { grid-column: 1 / -1; grid-row: 2; }
+  .pairing-context p { margin: 6px 0; }
+  .manifold-dimension { display: none; }
+}
+@media (min-width: 761px) and (max-width: 1050px) {
+  .manifold-stage { grid-template-columns: minmax(0, 1fr); }
+  .manifold-scene { padding-right: 0; }
+  .manifold-plot { flex: none; height: 360px; }
+  .manifold-spaces { display: grid; grid-template-columns: 1fr 1fr; border-left: 0; border-top: 1px solid var(--line); }
+  .space-panel { padding: 18px 14px 16px 0; }
+  .space-panel + .space-panel { padding-left: 14px; padding-right: 0; border-top: 0; border-left: 1px solid var(--line); }
+}
+@media (max-width: 760px) {
+  .manifold-main { padding: 23px 16px; }
+  .manifold-toolbar h1 { font-size: 28px; }
+  .manifold-toolbar h1 > span { font-size: 15px; }
+  .manifold-stage { display: block; }
+  .manifold-scene { padding-right: 0; padding-top: 15px; }
+  .manifold-plot { flex: none; height: 375px; min-height: 0; }
+  .manifold-plot .plot-actions button { min-height: 36px; }
+  .manifold-spaces { display: grid; grid-template-columns: 1fr 1fr; border-left: 0; border-top: 1px solid var(--line); }
+  .space-panel { padding: 16px 13px 16px 0; }
+  .space-panel + .space-panel { border-top: 0; border-left: 1px solid var(--line); padding-left: 13px; padding-right: 0; }
+  .space-heading { align-items: flex-start; gap: 8px; }
+  .space-symbol { font-size: 21px; }
+  .manifold-spaces .space-heading { display: block; }
+  .manifold-spaces .space-symbol { display: block; margin-bottom: 9px; }
+  .space-heading h2 { font-size: 11px; }
+  .space-diagram { height: 127px; }
+  .space-components { font-size: 10px; }
+  .manifold-legend { gap: 10px 12px; }
+  .manifold-pairing { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .pairing-context { grid-row: auto; }
+  .pairing-comparison { border-left: 0; padding-left: 0; padding-top: 16px; border-top: 1px solid var(--line); }
+  .pairing-primary strong { font-size: 34px; }
+  .manifold-slider .parameter-row label { max-width: none; }
+  .manifold-layer-controls label { min-height: 32px; }
+  .manifold-reset { min-height: 42px; }
+  .manifold-details summary { min-height: 40px; }
+}
+@media (max-width: 600px) {
+  .manifold-spaces { grid-template-columns: 1fr; }
+  .space-panel, .space-panel + .space-panel { padding: 18px 0; border-left: 0; }
+  .space-panel + .space-panel { border-top: 1px solid var(--line); }
+  .manifold-spaces .space-heading { display: flex; }
+  .space-diagram { height: 160px; }
+  .space-heading h2 > span { display: inline; margin-left: 5px; }
+}
